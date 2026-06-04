@@ -1,0 +1,6 @@
+<?xml version="1.0" encoding="utf-8"?>
+<full-backup-content>
+    <include domain="file" path="captures/"/>
+    <include domain="file" path="processed/"/>
+    <include domain="database" path="memoria_database"/>
+</full-backup-content>

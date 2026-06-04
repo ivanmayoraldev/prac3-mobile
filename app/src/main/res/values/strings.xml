@@ -1,0 +1,16 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="app_name">MemorIA</string>
+    <string name="app_description">Captura. Preserva. Revive.</string>
+    <string name="permission_camera_rationale">MemorIA necesita acceso a la cámara para capturar tus recuerdos más especiales.</string>
+    <string name="permission_storage_rationale">MemorIA necesita acceso al almacenamiento para guardar y mostrar tus recuerdos.</string>
+    <string name="error_camera_unavailable">La cámara no está disponible en este dispositivo.</string>
+    <string name="error_save_failed">No se pudo guardar la imagen. Inténtalo de nuevo.</string>
+    <string name="success_image_saved">¡Imagen guardada correctamente!</string>
+    <string name="success_memory_saved">¡Recuerdo guardado con éxito!</string>
+    <string name="label_take_photo">Tomar foto</string>
+    <string name="label_process_image">Procesar imagen</string>
+    <string name="label_play_video">Reproducir video</string>
+    <string name="label_timer">Cronómetro</string>
+    <string name="label_gallery">Galería</string>
+</resources>

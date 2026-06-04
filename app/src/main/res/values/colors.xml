@@ -1,0 +1,8 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <color name="splash_background">#0D0A1A</color>
+    <color name="indigo_deep">#1A1035</color>
+    <color name="indigo_accent">#9B7DFF</color>
+    <color name="gold_bright">#FFD166</color>
+    <color name="neutral_dark">#0D0A1A</color>
+</resources>

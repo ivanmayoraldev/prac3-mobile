@@ -1,0 +1,23 @@
+<?xml version="1.0" encoding="utf-8"?>
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:width="108dp"
+    android:height="108dp"
+    android:viewportWidth="108"
+    android:viewportHeight="108">
+
+    <!-- Background circle -->
+    <path
+        android:fillColor="#3D2B7A"
+        android:pathData="M54,54m-48,0a48,48 0,1 1,96 0a48,48 0,1 1,-96 0"/>
+
+    <!-- Star/memory symbol -->
+    <path
+        android:fillColor="#FFD166"
+        android:pathData="M54,22L58.5,42.5L79,38L65.5,54L79,70L58.5,65.5L54,86L49.5,65.5L29,70L42.5,54L29,38L49.5,42.5Z"/>
+
+    <!-- Inner circle -->
+    <path
+        android:fillColor="#9B7DFF"
+        android:pathData="M54,54m-12,0a12,12 0,1 1,24 0a12,12 0,1 1,-24 0"/>
+
+</vector>
