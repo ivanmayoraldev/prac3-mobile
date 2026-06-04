@@ -37,18 +37,13 @@ fun GalleryScreen(
     Scaffold(
         topBar = {
             TopAppBar(
-                title = { Text("Galería de Recuerdos") },
-                navigationIcon = {
-                    IconButton(onClick = onBack) {
-                        Icon(Icons.Filled.ArrowBack, contentDescription = "Volver")
-                    }
-                },
+                title = { Text("Galería", fontWeight = FontWeight.Bold) },
+                navigationIcon = { IconButton(onClick = onBack) { Icon(Icons.Filled.ArrowBack, "Volver") } },
                 actions = {
                     IconButton(onClick = viewModel::toggleFavoritesFilter) {
                         Icon(
                             if (showFavs) Icons.Filled.Favorite else Icons.Outlined.FavoriteBorder,
-                            contentDescription = "Favoritas",
-                            tint = if (showFavs) MemorIAColors.GoldBright else MaterialTheme.colorScheme.onSurface
+                            null, tint = if (showFavs) MemorIAColors.GoldBright else MaterialTheme.colorScheme.onSurface
                         )
                     }
                 },
@@ -56,19 +51,17 @@ fun GalleryScreen(
             )
         }
     ) { padding ->
-        Column(modifier = Modifier.fillMaxSize().padding(padding)) {
-            SearchBar(
-                query   = searchQuery,
-                onQuery = viewModel::setSearchQuery,
+        Column(Modifier.fillMaxSize().padding(padding)) {
+            MemoriaSearchBar(
+                query    = searchQuery,
+                onQuery  = viewModel::setSearchQuery,
                 modifier = Modifier.padding(horizontal = 16.dp, vertical = 8.dp)
             )
-
             if (memories.isEmpty()) {
-                Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
+                Box(Modifier.fillMaxSize(), Alignment.Center) {
                     Text(
                         if (searchQuery.isBlank()) "No hay recuerdos" else "Sin resultados para \"$searchQuery\"",
-                        style = MaterialTheme.typography.bodyLarge,
-                        color = MemorIAColors.NeutralHint
+                        style = MaterialTheme.typography.bodyLarge, color = MemorIAColors.NeutralHint
                     )
                 }
             } else {
@@ -79,10 +72,9 @@ fun GalleryScreen(
                     verticalArrangement   = Arrangement.spacedBy(8.dp)
                 ) {
                     itemsIndexed(memories) { index, memory ->
-                        AnimatedGalleryItem(
-                            memory = memory,
-                            index  = index,
-                            onClick = { onOpenDetail(memory.id) },
+                        GalleryItem(
+                            memory      = memory, index = index,
+                            onClick     = { onOpenDetail(memory.id) },
                             onLongClick = { viewModel.toggleFavorite(memory) }
                         )
                     }
@@ -94,73 +86,40 @@ fun GalleryScreen(
 
 @OptIn(ExperimentalFoundationApi::class)
 @Composable
-fun AnimatedGalleryItem(
-    memory: Memory,
-    index: Int,
-    onClick: () -> Unit,
-    onLongClick: () -> Unit
-) {
+fun GalleryItem(memory: Memory, index: Int, onClick: () -> Unit, onLongClick: () -> Unit) {
     var visible by remember { mutableStateOf(false) }
-    LaunchedEffect(Unit) {
-        kotlinx.coroutines.delay(index * 50L)
-        visible = true
-    }
+    LaunchedEffect(Unit) { kotlinx.coroutines.delay(index * 40L); visible = true }
 
     AnimatedVisibility(
         visible = visible,
-        enter   = scaleIn(
-            initialScale = 0.8f,
-            animationSpec = spring(dampingRatio = Spring.DampingRatioMediumBouncy, stiffness = Spring.StiffnessLow)
-        ) + fadeIn()
+        enter   = scaleIn(initialScale = 0.85f, animationSpec = spring(Spring.DampingRatioMediumBouncy, Spring.StiffnessLow)) + fadeIn()
     ) {
         Card(
-            modifier = Modifier
-                .fillMaxWidth()
-                .aspectRatio(0.8f)
+            modifier = Modifier.fillMaxWidth().aspectRatio(0.8f)
                 .combinedClickable(onClick = onClick, onLongClick = onLongClick),
             shape  = RoundedCornerShape(16.dp),
             colors = CardDefaults.cardColors(containerColor = MemorIAColors.NeutralCard)
         ) {
-            Box(modifier = Modifier.fillMaxSize()) {
+            Box(Modifier.fillMaxSize()) {
                 if (memory.imagePath != null) {
                     AsyncImage(
-                        model = memory.imagePath,
+                        model = memory.processedImagePath ?: memory.imagePath,
                         contentDescription = memory.title,
-                        modifier = Modifier.fillMaxSize(),
-                        contentScale = ContentScale.Crop
+                        modifier = Modifier.fillMaxSize(), contentScale = ContentScale.Crop
                     )
                 } else {
                     Box(
-                        modifier = Modifier.fillMaxSize()
-                            .background(
-                                Brush.linearGradient(
-                                    colors = listOf(emotionColor(memory.emotionTag).copy(alpha = 0.5f), MemorIAColors.NeutralCard)
-                                )
-                            ),
+                        Modifier.fillMaxSize().background(Brush.linearGradient(listOf(emotionColor(memory.emotionTag).copy(0.5f), MemorIAColors.NeutralCard))),
                         contentAlignment = Alignment.Center
-                    ) {
-                        Text(emotionEmoji(memory.emotionTag), fontSize = 48.sp)
-                    }
+                    ) { Text(memory.emotionTag.emoji, fontSize = 48.sp) }
                 }
-
-                Box(modifier = Modifier.fillMaxSize()
-                    .background(Brush.verticalGradient(
-                        colors = listOf(Color.Transparent, Color.Black.copy(alpha = 0.7f)),
-                        startY = 200f
-                    )))
-
+                Box(Modifier.fillMaxSize().background(Brush.verticalGradient(listOf(Color.Transparent, Color.Black.copy(0.7f)), startY = 200f)))
                 if (memory.isFavorite) {
-                    Icon(
-                        Icons.Filled.Favorite,
-                        contentDescription = null,
-                        modifier = Modifier.align(Alignment.TopEnd).padding(8.dp).size(18.dp),
-                        tint = MemorIAColors.GoldBright
-                    )
+                    Icon(Icons.Filled.Favorite, null, Modifier.align(Alignment.TopEnd).padding(8.dp).size(18.dp), tint = MemorIAColors.GoldBright)
                 }
-
-                Column(modifier = Modifier.align(Alignment.BottomStart).padding(10.dp)) {
+                Column(Modifier.align(Alignment.BottomStart).padding(10.dp)) {
                     Text(memory.title, style = MaterialTheme.typography.labelLarge, color = Color.White, maxLines = 1, overflow = TextOverflow.Ellipsis)
-                    Text(formatDate(memory.createdAt), style = MaterialTheme.typography.labelSmall, color = Color.White.copy(alpha = 0.7f))
+                    Text(formatDate(memory.createdAt), style = MaterialTheme.typography.labelSmall, color = Color.White.copy(0.7f))
                 }
             }
         }
@@ -178,30 +137,23 @@ fun MemoryDetailScreen(
     val memories by viewModel.memories.collectAsState()
     val memory   = memories.find { it.id == memoryId }
     var showDelete by remember { mutableStateOf(false) }
-
     val scrollState = rememberScrollState()
-    val imageOffset by remember { derivedStateOf { scrollState.value * 0.3f } }
 
     Scaffold(
         topBar = {
             TopAppBar(
                 title = {},
                 navigationIcon = {
-                    IconButton(onClick = onBack) {
-                        Icon(Icons.Filled.ArrowBack, contentDescription = "Volver", tint = Color.White)
-                    }
+                    IconButton(onClick = onBack) { Icon(Icons.Filled.ArrowBack, "Volver", tint = Color.White) }
                 },
                 actions = {
                     memory?.let { m ->
                         IconButton(onClick = { viewModel.toggleFavorite(m) }) {
-                            Icon(
-                                if (m.isFavorite) Icons.Filled.Favorite else Icons.Outlined.FavoriteBorder,
-                                contentDescription = "Favorita",
-                                tint = if (m.isFavorite) MemorIAColors.GoldBright else Color.White
-                            )
+                            Icon(if (m.isFavorite) Icons.Filled.Favorite else Icons.Outlined.FavoriteBorder,
+                                null, tint = if (m.isFavorite) MemorIAColors.GoldBright else Color.White)
                         }
                         IconButton(onClick = { showDelete = true }) {
-                            Icon(Icons.Filled.Delete, contentDescription = "Eliminar", tint = Color.White)
+                            Icon(Icons.Filled.Delete, null, tint = Color.White)
                         }
                     }
                 },
@@ -210,20 +162,13 @@ fun MemoryDetailScreen(
         }
     ) { _ ->
         if (memory == null) {
-            Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
-                CircularProgressIndicator(color = MemorIAColors.IndigoAccent)
-            }
+            Box(Modifier.fillMaxSize(), Alignment.Center) { CircularProgressIndicator(color = MemorIAColors.IndigoAccent) }
             return@Scaffold
         }
 
-        Column(modifier = Modifier.fillMaxSize().verticalScroll(scrollState)) {
-
-            Box(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .height(320.dp)
-                    .clipToBounds()
-            ) {
+        Column(Modifier.fillMaxSize().verticalScroll(scrollState)) {
+            val imageOffset = (scrollState.value * 0.3f).toInt()
+            Box(Modifier.fillMaxWidth().height(320.dp).clipToBounds()) {
                 if (memory.imagePath != null) {
                     AsyncImage(
                         model = memory.processedImagePath ?: memory.imagePath,
@@ -233,31 +178,18 @@ fun MemoryDetailScreen(
                     )
                 } else {
                     Box(
-                        modifier = Modifier.fillMaxSize()
-                            .background(Brush.linearGradient(listOf(MemorIAColors.IndigoDark, MemorIAColors.NeutralDark))),
+                        Modifier.fillMaxSize().background(Brush.linearGradient(listOf(MemorIAColors.IndigoDark, MemorIAColors.NeutralDark))),
                         contentAlignment = Alignment.Center
-                    ) {
-                        Text(emotionEmoji(memory.emotionTag), fontSize = 80.sp)
-                    }
+                    ) { Text(memory.emotionTag.emoji, fontSize = 80.sp) }
                 }
-                Box(modifier = Modifier.fillMaxSize()
-                    .background(Brush.verticalGradient(
-                        colors = listOf(Color.Black.copy(0.3f), Color.Transparent, Color.Black.copy(0.5f))
-                    )))
+                Box(Modifier.fillMaxSize().background(Brush.verticalGradient(listOf(Color.Black.copy(0.25f), Color.Transparent, Color.Black.copy(0.55f)))))
             }
 
-            Column(modifier = Modifier.padding(20.dp)) {
-                Surface(
-                    shape = RoundedCornerShape(50),
-                    color = emotionColor(memory.emotionTag).copy(alpha = 0.15f)
-                ) {
-                    Row(
-                        modifier = Modifier.padding(horizontal = 12.dp, vertical = 6.dp),
-                        verticalAlignment = Alignment.CenterVertically,
-                        horizontalArrangement = Arrangement.spacedBy(4.dp)
-                    ) {
-                        Text(emotionEmoji(memory.emotionTag), fontSize = 14.sp)
-                        Text(emotionLabel(memory.emotionTag), style = MaterialTheme.typography.labelMedium, color = emotionColor(memory.emotionTag))
+            Column(Modifier.padding(20.dp)) {
+                Surface(shape = RoundedCornerShape(50), color = emotionColor(memory.emotionTag).copy(0.15f)) {
+                    Row(Modifier.padding(horizontal = 12.dp, vertical = 6.dp), verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(4.dp)) {
+                        Text(memory.emotionTag.emoji, fontSize = 14.sp)
+                        Text(memory.emotionTag.label, style = MaterialTheme.typography.labelMedium, color = emotionColor(memory.emotionTag))
                     }
                 }
 
@@ -267,39 +199,43 @@ fun MemoryDetailScreen(
                 if (memory.location.isNotBlank()) {
                     Spacer(Modifier.height(4.dp))
                     Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(4.dp)) {
-                        Icon(Icons.Filled.LocationOn, contentDescription = null, modifier = Modifier.size(16.dp), tint = MemorIAColors.NeutralHint)
+                        Icon(Icons.Filled.LocationOn, null, Modifier.size(16.dp), tint = MemorIAColors.NeutralHint)
                         Text(memory.location, style = MaterialTheme.typography.bodySmall, color = MemorIAColors.NeutralHint)
                     }
                 }
 
                 Spacer(Modifier.height(4.dp))
                 Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(4.dp)) {
-                    Icon(Icons.Filled.AccessTime, contentDescription = null, modifier = Modifier.size(16.dp), tint = MemorIAColors.NeutralHint)
+                    Icon(Icons.Filled.AccessTime, null, Modifier.size(16.dp), tint = MemorIAColors.NeutralHint)
                     Text(formatDate(memory.createdAt), style = MaterialTheme.typography.bodySmall, color = MemorIAColors.NeutralHint)
                 }
 
                 if (memory.description.isNotBlank()) {
                     Spacer(Modifier.height(16.dp))
-                    Text(memory.description, style = MaterialTheme.typography.bodyLarge, color = MaterialTheme.colorScheme.onBackground.copy(alpha = 0.85f))
+                    Text(memory.description, style = MaterialTheme.typography.bodyLarge, color = MaterialTheme.colorScheme.onBackground.copy(0.85f))
                 }
 
-                if (memory.videoPath != null || memory.type == MemoryType.VIDEO) {
-                    Spacer(Modifier.height(20.dp))
-                    Button(
-                        onClick = { onPlayVideo(memory.id) },
-                        modifier = Modifier.fillMaxWidth(),
-                        colors = ButtonDefaults.buttonColors(containerColor = MemorIAColors.IndigoAccent)
-                    ) {
-                        Icon(Icons.Filled.PlayCircleFilled, contentDescription = null)
-                        Spacer(Modifier.width(8.dp))
-                        Text("Reproducir Video")
+                if (memory.processedImagePath != null) {
+                    Spacer(Modifier.height(16.dp))
+                    Surface(shape = RoundedCornerShape(8.dp), color = MemorIAColors.IndigoAccent.copy(0.15f), border = BorderStroke(1.dp, MemorIAColors.IndigoAccent.copy(0.3f))) {
+                        Row(Modifier.padding(10.dp), verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(6.dp)) {
+                            Icon(Icons.Filled.AutoFixHigh, null, Modifier.size(14.dp), tint = MemorIAColors.IndigoAccent)
+                            Text("Imagen con filtro aplicado", style = MaterialTheme.typography.labelSmall, color = MemorIAColors.IndigoAccent)
+                        }
                     }
                 }
 
-                Spacer(Modifier.height(12.dp))
-                Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                    DetailBadge(label = memory.type.name)
-                    if (memory.processedImagePath != null) DetailBadge(label = "PROCESADA", color = MemorIAColors.GoldBright)
+                if (memory.videoPath != null || memory.type == MemoryType.VIDEO || memory.type == MemoryType.MIXED) {
+                    Spacer(Modifier.height(20.dp))
+                    Button(
+                        onClick  = { onPlayVideo(memory.id) },
+                        modifier = Modifier.fillMaxWidth(),
+                        colors   = ButtonDefaults.buttonColors(containerColor = MemorIAColors.IndigoAccent)
+                    ) {
+                        Icon(Icons.Filled.PlayCircleFilled, null)
+                        Spacer(Modifier.width(8.dp))
+                        Text("Reproducir Video", fontWeight = FontWeight.Bold)
+                    }
                 }
             }
         }
@@ -308,61 +244,15 @@ fun MemoryDetailScreen(
     if (showDelete) {
         AlertDialog(
             onDismissRequest = { showDelete = false },
-            title = { Text("Eliminar recuerdo") },
-            text  = { Text("¿Estás seguro? Esta acción no se puede deshacer.") },
+            icon    = { Icon(Icons.Filled.Delete, null, tint = MemorIAColors.Error) },
+            title   = { Text("Eliminar recuerdo") },
+            text    = { Text("Esta acción no se puede deshacer.") },
             confirmButton = {
-                TextButton(
-                    onClick = {
-                        viewModel.deleteMemory(memory!!)
-                        showDelete = false
-                        onBack()
-                    }
-                ) { Text("Eliminar", color = MemorIAColors.Error) }
-            },
-            dismissButton = {
-                TextButton(onClick = { showDelete = false }) { Text("Cancelar") }
-            }
-        )
-    }
-}
-
-@Composable
-fun DetailBadge(label: String, color: Color = MemorIAColors.IndigoAccent) {
-    Surface(
-        shape = RoundedCornerShape(4.dp),
-        color = color.copy(alpha = 0.15f),
-        border = BorderStroke(1.dp, color.copy(alpha = 0.3f))
-    ) {
-        Text(label, modifier = Modifier.padding(horizontal = 8.dp, vertical = 3.dp), style = MaterialTheme.typography.labelSmall, color = color, letterSpacing = 0.5.sp)
-    }
-}
-
-@Composable
-fun SearchBar(
-    query: String,
-    onQuery: (String) -> Unit,
-    modifier: Modifier = Modifier
-) {
-    OutlinedTextField(
-        value         = query,
-        onValueChange = onQuery,
-        modifier      = modifier.fillMaxWidth(),
-        placeholder   = { Text("Buscar recuerdos...") },
-        leadingIcon   = { Icon(Icons.Filled.Search, contentDescription = null) },
-        trailingIcon  = if (query.isNotBlank()) {
-            {
-                IconButton(onClick = { onQuery("") }) {
-                    Icon(Icons.Filled.Clear, contentDescription = "Limpiar")
+                TextButton(onClick = { viewModel.deleteMemory(memory!!); showDelete = false; onBack() }) {
+                    Text("Eliminar", color = MemorIAColors.Error, fontWeight = FontWeight.Bold)
                 }
-            }
-        } else null,
-        singleLine    = true,
-        shape         = RoundedCornerShape(50),
-        colors        = OutlinedTextFieldDefaults.colors(
-            focusedBorderColor   = MemorIAColors.IndigoAccent,
-            unfocusedBorderColor = MemorIAColors.NeutralBorder,
-            unfocusedContainerColor = MemorIAColors.NeutralCard,
-            focusedContainerColor   = MemorIAColors.NeutralCard
+            },
+            dismissButton = { TextButton(onClick = { showDelete = false }) { Text("Cancelar") } }
         )
-    )
+    }
 }

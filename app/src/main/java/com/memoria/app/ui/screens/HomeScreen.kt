@@ -4,6 +4,7 @@ import androidx.compose.animation.*
 import androidx.compose.animation.core.*
 import androidx.compose.foundation.*
 import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.lazy.*
 import androidx.compose.foundation.shape.*
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.*
@@ -31,6 +32,7 @@ fun HomeScreen(
     onOpenCamera: () -> Unit,
     onOpenGallery: () -> Unit,
     onOpenTimer: () -> Unit,
+    onOpenVideo: () -> Unit,
     onOpenDetail: (Long) -> Unit
 ) {
     val memories    by viewModel.memories.collectAsState()
@@ -39,43 +41,43 @@ fun HomeScreen(
     val stats       by viewModel.stats.collectAsState()
     val uiState     by viewModel.uiState.collectAsState()
 
-    var greetingVisible by remember { mutableStateOf(false) }
-    LaunchedEffect(Unit) { greetingVisible = true }
+    var headerVisible by remember { mutableStateOf(false) }
+    LaunchedEffect(Unit) { headerVisible = true }
 
-    val greetingAlpha by animateFloatAsState(
-        targetValue  = if (greetingVisible) 1f else 0f,
-        animationSpec = tween(800), label = "greetingAlpha"
+    val headerAlpha by animateFloatAsState(
+        targetValue = if (headerVisible) 1f else 0f,
+        animationSpec = tween(800), label = "headerAlpha"
     )
-    val greetingOffset by animateDpAsState(
-        targetValue  = if (greetingVisible) 0.dp else (-16).dp,
-        animationSpec = tween(600, easing = FastOutSlowInEasing), label = "greetingOffset"
+    val headerOffset by animateDpAsState(
+        targetValue = if (headerVisible) 0.dp else (-16).dp,
+        animationSpec = tween(600, easing = FastOutSlowInEasing), label = "headerOffset"
     )
 
-    val snackbarHostState = remember { SnackbarHostState() }
+    val snackbar = remember { SnackbarHostState() }
     LaunchedEffect(uiState.error) {
-        uiState.error?.let { snackbarHostState.showSnackbar(it); viewModel.clearError() }
+        uiState.error?.let { snackbar.showSnackbar(it); viewModel.clearError() }
     }
 
     Scaffold(
-        snackbarHost = { SnackbarHost(snackbarHostState) },
+        snackbarHost = { SnackbarHost(snackbar) },
         floatingActionButton = {
-            var fabPressed by remember { mutableStateOf(false) }
+            var pressed by remember { mutableStateOf(false) }
             val fabScale by animateFloatAsState(
-                targetValue  = if (fabPressed) 0.9f else 1f,
+                targetValue = if (pressed) 0.88f else 1f,
                 animationSpec = spring(dampingRatio = Spring.DampingRatioMediumBouncy),
-                label = "fabScale", finishedListener = { fabPressed = false }
+                label = "fab", finishedListener = { pressed = false }
             )
             ExtendedFloatingActionButton(
-                onClick         = { fabPressed = true; onOpenCamera() },
-                modifier        = Modifier.scale(fabScale),
-                icon            = { Icon(Icons.Filled.CameraAlt, null) },
-                text            = { Text("Capturar") },
-                containerColor  = MemorIAColors.IndigoAccent,
-                contentColor    = Color.White
+                onClick        = { pressed = true; onOpenCamera() },
+                modifier       = Modifier.scale(fabScale),
+                icon           = { Icon(Icons.Filled.CameraAlt, null) },
+                text           = { Text("Capturar", fontWeight = FontWeight.Bold) },
+                containerColor = MemorIAColors.IndigoAccent,
+                contentColor   = Color.White
             )
         }
     ) { padding ->
-        androidx.compose.foundation.lazy.LazyColumn(
+        LazyColumn(
             modifier       = Modifier.fillMaxSize().padding(padding),
             contentPadding = PaddingValues(bottom = 100.dp)
         ) {
@@ -83,32 +85,40 @@ fun HomeScreen(
                 Box(
                     modifier = Modifier.fillMaxWidth()
                         .background(Brush.verticalGradient(listOf(MemorIAColors.IndigoDark, MaterialTheme.colorScheme.background)))
-                        .padding(horizontal = 20.dp, vertical = 24.dp)
+                        .padding(horizontal = 20.dp, vertical = 28.dp)
                 ) {
-                    Column(modifier = Modifier.alpha(greetingAlpha).offset(y = greetingOffset)) {
-                        Text(greeting(), style = MaterialTheme.typography.labelLarge, color = MemorIAColors.IndigoAccent, letterSpacing = 1.5.sp)
+                    Column(modifier = Modifier.alpha(headerAlpha).offset(y = headerOffset)) {
+                        Text(greetingText(), style = MaterialTheme.typography.labelLarge, color = MemorIAColors.IndigoAccent, letterSpacing = 1.5.sp)
                         Spacer(Modifier.height(4.dp))
                         Text("Tus Recuerdos", style = MaterialTheme.typography.headlineLarge, color = Color.White, fontWeight = FontWeight.Black)
-                        Spacer(Modifier.height(4.dp))
-                        Text("${stats.first} memorias · ${stats.second} favoritas", style = MaterialTheme.typography.bodyMedium, color = MemorIAColors.NeutralHint)
+                        Spacer(Modifier.height(6.dp))
+                        AnimatedContent(targetState = stats, label = "stats") { (total, favs) ->
+                            Text(
+                                "$total ${if (total == 1) "memoria" else "memorias"} · $favs ${if (favs == 1) "favorita" else "favoritas"}",
+                                style = MaterialTheme.typography.bodyMedium,
+                                color = MemorIAColors.NeutralHint
+                            )
+                        }
                     }
                 }
             }
 
             item {
-                SearchBar(
-                    query    = searchQuery, onQuery = viewModel::setSearchQuery,
+                MemoriaSearchBar(
+                    query    = searchQuery,
+                    onQuery  = viewModel::setSearchQuery,
                     modifier = Modifier.padding(horizontal = 16.dp, vertical = 8.dp)
                 )
             }
 
-            item { QuickActionsRow(onOpenCamera, onOpenGallery, onOpenTimer, showFavs, viewModel::toggleFavoritesFilter) }
+            item { QuickActionsRow(onOpenCamera, onOpenGallery, onOpenTimer, onOpenVideo, showFavs, viewModel::toggleFavoritesFilter) }
 
             item {
                 Text(
-                    text     = if (showFavs) "✦ Favoritas" else "Recientes",
-                    modifier = Modifier.padding(horizontal = 20.dp, vertical = 12.dp),
-                    style    = MaterialTheme.typography.titleMedium
+                    if (showFavs) "✦ Favoritas" else "Recientes",
+                    modifier   = Modifier.padding(horizontal = 20.dp, vertical = 12.dp),
+                    style      = MaterialTheme.typography.titleMedium,
+                    fontWeight = FontWeight.SemiBold
                 )
             }
 
@@ -119,7 +129,10 @@ fun HomeScreen(
             val chunked: List<List<Memory>> = memories.chunked(2)
             items(chunked.size) { index ->
                 val row = chunked[index]
-                Row(modifier = Modifier.padding(horizontal = 12.dp, vertical = 4.dp), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                Row(
+                    modifier = Modifier.padding(horizontal = 12.dp, vertical = 4.dp),
+                    horizontalArrangement = Arrangement.spacedBy(8.dp)
+                ) {
                     row.forEach { memory ->
                         MemoryCard(
                             memory     = memory,
@@ -136,18 +149,42 @@ fun HomeScreen(
 }
 
 @Composable
+fun MemoriaSearchBar(query: String, onQuery: (String) -> Unit, modifier: Modifier = Modifier) {
+    OutlinedTextField(
+        value         = query,
+        onValueChange = onQuery,
+        modifier      = modifier.fillMaxWidth(),
+        placeholder   = { Text("Buscar recuerdos...") },
+        leadingIcon   = { Icon(Icons.Filled.Search, null) },
+        trailingIcon  = if (query.isNotBlank()) {
+            { IconButton(onClick = { onQuery("") }) { Icon(Icons.Filled.Clear, null) } }
+        } else null,
+        singleLine = true,
+        shape      = RoundedCornerShape(50),
+        colors     = OutlinedTextFieldDefaults.colors(
+            focusedBorderColor      = MemorIAColors.IndigoAccent,
+            unfocusedBorderColor    = MemorIAColors.NeutralBorder,
+            unfocusedContainerColor = MemorIAColors.NeutralCard,
+            focusedContainerColor   = MemorIAColors.NeutralCard
+        )
+    )
+}
+
+@Composable
 fun QuickActionsRow(
     onCamera: () -> Unit, onGallery: () -> Unit, onTimer: () -> Unit,
+    onVideo: () -> Unit,
     showFavs: Boolean, onToggleFavs: () -> Unit
 ) {
     Row(
         modifier = Modifier.horizontalScroll(rememberScrollState()).padding(horizontal = 16.dp, vertical = 8.dp),
         horizontalArrangement = Arrangement.spacedBy(10.dp)
     ) {
-        QuickActionChip(Icons.Filled.CameraAlt,      "Cámara",     onCamera)
-        QuickActionChip(Icons.Filled.PhotoLibrary,   "Galería",    onGallery)
-        QuickActionChip(Icons.Filled.Timer,          "Cronómetro", onTimer)
-        QuickActionChip(
+        QuickChip(Icons.Filled.CameraAlt,    "Cámara",     onCamera)
+        QuickChip(Icons.Filled.PhotoLibrary, "Galería",    onGallery)
+        QuickChip(Icons.Filled.PlayCircle,   "Video",      onVideo)
+        QuickChip(Icons.Filled.Timer,        "Cronómetro", onTimer)
+        QuickChip(
             icon     = if (showFavs) Icons.Filled.Favorite else Icons.Outlined.FavoriteBorder,
             label    = "Favoritas",
             onClick  = onToggleFavs,
@@ -157,7 +194,7 @@ fun QuickActionsRow(
 }
 
 @Composable
-fun QuickActionChip(
+fun QuickChip(
     icon: androidx.compose.ui.graphics.vector.ImageVector,
     label: String,
     onClick: () -> Unit,
@@ -165,12 +202,12 @@ fun QuickActionChip(
 ) {
     var pressed by remember { mutableStateOf(false) }
     val scale by animateFloatAsState(
-        targetValue  = if (pressed) 0.93f else 1f,
+        targetValue = if (pressed) 0.92f else 1f,
         animationSpec = spring(dampingRatio = Spring.DampingRatioMediumBouncy),
-        label = "chipScale", finishedListener = { pressed = false }
+        label = "chip", finishedListener = { pressed = false }
     )
     Surface(
-        onClick = { pressed = true; onClick() },
+        onClick  = { pressed = true; onClick() },
         modifier = Modifier.scale(scale),
         shape    = RoundedCornerShape(50),
         color    = if (selected) MemorIAColors.IndigoAccent else MemorIAColors.NeutralCard,
@@ -190,34 +227,40 @@ fun QuickActionChip(
 @OptIn(ExperimentalFoundationApi::class)
 @Composable
 fun MemoryCard(memory: Memory, modifier: Modifier = Modifier, onClick: () -> Unit, onFavorite: () -> Unit) {
-    var isLongPressed by remember { mutableStateOf(false) }
+    var longPressed by remember { mutableStateOf(false) }
     val scale by animateFloatAsState(
-        targetValue  = if (isLongPressed) 1.03f else 1f,
+        targetValue = if (longPressed) 1.04f else 1f,
         animationSpec = spring(dampingRatio = Spring.DampingRatioMediumBouncy),
-        label = "cardScale", finishedListener = { isLongPressed = false }
+        label = "cardScale", finishedListener = { longPressed = false }
     )
     Card(
-        modifier = modifier.scale(scale).aspectRatio(0.75f).combinedClickable(onClick = onClick, onLongClick = { isLongPressed = true; onFavorite() }),
-        shape    = RoundedCornerShape(16.dp),
-        colors   = CardDefaults.cardColors(containerColor = MemorIAColors.NeutralCard)
+        modifier = modifier.scale(scale).aspectRatio(0.75f)
+            .combinedClickable(onClick = onClick, onLongClick = { longPressed = true; onFavorite() }),
+        shape  = RoundedCornerShape(16.dp),
+        colors = CardDefaults.cardColors(containerColor = MemorIAColors.NeutralCard)
     ) {
-        Box(modifier = Modifier.fillMaxSize()) {
+        Box(Modifier.fillMaxSize()) {
             if (memory.imagePath != null) {
-                AsyncImage(model = memory.imagePath, contentDescription = memory.title, modifier = Modifier.fillMaxSize(), contentScale = ContentScale.Crop)
+                AsyncImage(
+                    model = memory.processedImagePath ?: memory.imagePath,
+                    contentDescription = memory.title,
+                    modifier = Modifier.fillMaxSize(), contentScale = ContentScale.Crop
+                )
             } else {
                 Box(
-                    modifier = Modifier.fillMaxSize().background(Brush.linearGradient(listOf(emotionColor(memory.emotionTag).copy(0.7f), MemorIAColors.NeutralCard))),
+                    modifier = Modifier.fillMaxSize()
+                        .background(Brush.linearGradient(listOf(emotionColor(memory.emotionTag).copy(0.6f), MemorIAColors.NeutralCard))),
                     contentAlignment = Alignment.Center
-                ) { Text(emotionEmoji(memory.emotionTag), fontSize = 40.sp) }
+                ) { Text(memory.emotionTag.emoji, fontSize = 40.sp) }
             }
-            Box(modifier = Modifier.fillMaxSize().background(Brush.verticalGradient(listOf(Color.Transparent, Color.Black.copy(0.75f)), startY = 100f)))
+            Box(Modifier.fillMaxSize().background(Brush.verticalGradient(listOf(Color.Transparent, Color.Black.copy(0.75f)), startY = 80f)))
             if (memory.type == MemoryType.VIDEO || memory.type == MemoryType.MIXED) {
-                Icon(Icons.Filled.PlayCircleFilled, "Video", Modifier.align(Alignment.Center).size(40.dp), tint = Color.White.copy(0.9f))
+                Icon(Icons.Filled.PlayCircleFilled, null, Modifier.align(Alignment.Center).size(40.dp), tint = Color.White.copy(0.9f))
             }
             if (memory.isFavorite) {
-                Icon(Icons.Filled.Favorite, "Fav", Modifier.align(Alignment.TopEnd).padding(8.dp).size(20.dp), tint = MemorIAColors.GoldBright)
+                Icon(Icons.Filled.Favorite, null, Modifier.align(Alignment.TopEnd).padding(8.dp).size(20.dp), tint = MemorIAColors.GoldBright)
             }
-            Column(modifier = Modifier.align(Alignment.BottomStart).padding(12.dp)) {
+            Column(Modifier.align(Alignment.BottomStart).padding(12.dp)) {
                 Text(memory.title, style = MaterialTheme.typography.titleSmall, color = Color.White, maxLines = 1, overflow = TextOverflow.Ellipsis)
                 Text(formatDate(memory.createdAt), style = MaterialTheme.typography.labelSmall, color = Color.White.copy(0.7f))
             }
@@ -227,13 +270,17 @@ fun MemoryCard(memory: Memory, modifier: Modifier = Modifier, onClick: () -> Uni
 
 @Composable
 fun EmptyStateCard(onOpenCamera: () -> Unit) {
-    val infiniteTransition = rememberInfiniteTransition(label = "empty")
-    val floatY by infiniteTransition.animateFloat(
+    val transition = rememberInfiniteTransition(label = "float")
+    val floatY by transition.animateFloat(
         initialValue = 0f, targetValue = -12f,
         animationSpec = infiniteRepeatable(tween(2000, easing = FastOutSlowInEasing), RepeatMode.Reverse),
         label = "float"
     )
-    Card(modifier = Modifier.fillMaxWidth().padding(24.dp), shape = RoundedCornerShape(24.dp), colors = CardDefaults.cardColors(containerColor = MemorIAColors.NeutralCard)) {
+    Card(
+        modifier = Modifier.fillMaxWidth().padding(24.dp),
+        shape  = RoundedCornerShape(24.dp),
+        colors = CardDefaults.cardColors(containerColor = MemorIAColors.NeutralCard)
+    ) {
         Column(Modifier.fillMaxWidth().padding(32.dp), horizontalAlignment = Alignment.CenterHorizontally) {
             Text("📸", fontSize = 64.sp, modifier = Modifier.offset(y = floatY.dp))
             Spacer(Modifier.height(16.dp))
@@ -242,18 +289,19 @@ fun EmptyStateCard(onOpenCamera: () -> Unit) {
             Text("Captura tu primer momento especial", style = MaterialTheme.typography.bodyMedium, color = MemorIAColors.NeutralHint)
             Spacer(Modifier.height(20.dp))
             Button(onClick = onOpenCamera, colors = ButtonDefaults.buttonColors(containerColor = MemorIAColors.IndigoAccent)) {
-                Icon(Icons.Filled.CameraAlt, null); Spacer(Modifier.width(8.dp)); Text("Abrir Cámara")
+                Icon(Icons.Filled.CameraAlt, null); Spacer(Modifier.width(8.dp)); Text("Abrir Cámara", fontWeight = FontWeight.Bold)
             }
         }
     }
 }
 
-fun greeting(): String {
-    val hour = Calendar.getInstance().get(Calendar.HOUR_OF_DAY)
-    return when { hour < 12 -> "BUENOS DÍAS"; hour < 19 -> "BUENAS TARDES"; else -> "BUENAS NOCHES" }
+fun greetingText(): String = when (Calendar.getInstance().get(Calendar.HOUR_OF_DAY)) {
+    in 0..11  -> "BUENOS DÍAS"
+    in 12..18 -> "BUENAS TARDES"
+    else      -> "BUENAS NOCHES"
 }
 
-fun formatDate(timestamp: Long): String = SimpleDateFormat("d MMM yyyy", Locale("es")).format(Date(timestamp))
+fun formatDate(ts: Long): String = SimpleDateFormat("d MMM yyyy", Locale("es")).format(Date(ts))
 
 fun emotionColor(tag: EmotionTag): Color = when (tag) {
     EmotionTag.JOY       -> Color(0xFFFFD166)
@@ -263,11 +311,4 @@ fun emotionColor(tag: EmotionTag): Color = when (tag) {
     EmotionTag.PEACE     -> Color(0xFF95D5B2)
     EmotionTag.SURPRISE  -> Color(0xFFFF9F1C)
     EmotionTag.GRATITUDE -> Color(0xFF9B7DFF)
-}
-
-fun emotionEmoji(tag: EmotionTag): String = when (tag) {
-    EmotionTag.JOY       -> "😊"; EmotionTag.LOVE      -> "❤️"
-    EmotionTag.NOSTALGIA -> "🌅"; EmotionTag.ADVENTURE -> "🌍"
-    EmotionTag.PEACE     -> "🌿"; EmotionTag.SURPRISE  -> "✨"
-    EmotionTag.GRATITUDE -> "🙏"
 }

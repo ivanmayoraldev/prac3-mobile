@@ -5,7 +5,35 @@ import androidx.room.PrimaryKey
 
 enum class MemoryType { PHOTO, VIDEO, MIXED }
 
-enum class EmotionTag { JOY, LOVE, NOSTALGIA, ADVENTURE, PEACE, SURPRISE, GRATITUDE }
+enum class EmotionTag(val emoji: String, val label: String) {
+    JOY("😊", "Alegría"),
+    LOVE("❤️", "Amor"),
+    NOSTALGIA("🌅", "Nostalgia"),
+    ADVENTURE("🌍", "Aventura"),
+    PEACE("🌿", "Paz"),
+    SURPRISE("✨", "Sorpresa"),
+    GRATITUDE("🙏", "Gratitud")
+}
+
+enum class ProcessingType(val label: String, val emoji: String) {
+    NONE("Original", "🖼️"),
+    GRAYSCALE("Grises", "🌫️"),
+    SEPIA("Sepia", "☕"),
+    VINTAGE("Vintage", "📷"),
+    WARM("Cálido", "🌅"),
+    COOL("Frío", "❄️"),
+    BRIGHTNESS("Brillo", "☀️"),
+    CONTRAST("Contraste", "◐"),
+    ROTATE_90("Rotar 90°", "🔄"),
+    FLIP_H("Voltear", "↔️"),
+    COMPRESS("Comprimir", "🗜️")
+}
+
+enum class ImageFormat(val label: String, val ext: String) {
+    JPEG("JPEG", "jpg"),
+    PNG("PNG", "png"),
+    WEBP("WEBP", "webp")
+}
 
 @Entity(tableName = "memories")
 data class Memory(
@@ -23,17 +51,7 @@ data class Memory(
     val capturedAt: Long = System.currentTimeMillis()
 )
 
-data class MemoryUiState(
-    val memories: List<Memory> = emptyList(),
-    val isLoading: Boolean = false,
-    val error: String? = null
-)
-
-data class CameraUiState(
-    val capturedImagePath: String? = null,
-    val hasPermission: Boolean = false,
-    val error: String? = null
-)
+data class MemoryUiState(val isLoading: Boolean = false, val error: String? = null)
 
 data class ImageProcessState(
     val originalPath: String? = null,
@@ -45,26 +63,6 @@ data class ImageProcessState(
     val error: String? = null,
     val savedMemoryId: Long? = null
 )
-
-enum class ProcessingType(val label: String, val emoji: String) {
-    NONE("Original",    "🖼️"),
-    GRAYSCALE("Grises",   "🌫️"),
-    SEPIA("Sepia",     "☕"),
-    VINTAGE("Vintage",   "📷"),
-    WARM("Cálido",    "🌅"),
-    COOL("Frío",      "❄️"),
-    BRIGHTNESS("Brillo",    "☀️"),
-    CONTRAST("Contraste", "◐"),
-    ROTATE_90("Rotar 90°", "🔄"),
-    FLIP_H("Voltear",   "↔️"),
-    COMPRESS("Comprimir", "🗜️")
-}
-
-enum class ImageFormat(val label: String, val ext: String) {
-    JPEG("JPEG", "jpg"),
-    PNG("PNG", "png"),
-    WEBP("WEBP", "webp")
-}
 
 data class TimerState(
     val elapsedSeconds: Long = 0L,
