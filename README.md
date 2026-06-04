@@ -1,227 +1,209 @@
-# MemorIA — Gestor de Recuerdos Multimedia 📸✨
+# MemorIA — Gestor de Recuerdos Multimedia
 
-> *Captura. Preserva. Revive.*
+> Captura. Preserva. Revive.
 
-Una app Android nativa premium en **Kotlin + Jetpack Compose** que cubre **todos los requisitos de la práctica** con una estética innovadora y arquitectura profesional.
-
----
-
-## 🎨 Concepto y Diseño
-
-**MemorIA** es un gestor de recuerdos multimedia con inteligencia emocional. La app asocia cada recuerdo con una emoción (Alegría, Amor, Nostalgia, Aventura, Paz, Sorpresa, Gratitud) y presenta la galería con una interfaz oscura premium en paleta **Índigo Profundo + Oro Cálido**.
+App Android nativa en Kotlin + Jetpack Compose que cubre todos los requisitos de la practica con arquitectura profesional MVVM y diseno premium en paleta Indigo + Oro.
 
 ---
 
-## 📋 Cobertura de Requisitos
+## Concepto y Diseno
 
-### 1. ✅ Captura de Fotografía (`CameraScreen.kt`)
-- **CameraX** con `PreviewView`, `ImageCapture` y ciclo de vida vinculado
-- Solicitud de permisos con `Accompanist Permissions` (rationale + denied states)
-- Soporte frontal/trasera + flash on/off
-- Animación de obturador (shutter flash blanco)
-- Guardado en `filesDir/captures/MEMORIA_timestamp.jpg`
+MemorIA es un gestor de recuerdos multimedia con etiquetas emocionales. La app asocia cada recuerdo con una emocion (Alegria, Amor, Nostalgia, Aventura, Paz, Sorpresa, Gratitud) y presenta la galeria con una interfaz oscura premium.
+
+---
+
+## Cobertura de Requisitos
+
+### 1. Captura de Fotografia — CameraScreen.kt
+
+- CameraX con PreviewView, ImageCapture y ciclo de vida vinculado
+- Solicitud de permisos con Accompanist Permissions, incluyendo flujo de rationale y estado denegado
+- Soporte camara frontal y trasera, flash on/off
+- Animacion de obturador al capturar
+- Guardado en filesDir/captures/MEMORIA_timestamp.jpg
 - Preview thumbnail en tiempo real al capturar
-- Manejo completo de errores `ImageCaptureException` (cámara cerrada, I/O, cámara inválida)
-- Confirmación visual al guardar (navegación directa al procesador)
+- Manejo completo de errores ImageCaptureException: camara cerrada, I/O, camara invalida
+- Confirmacion visual al guardar con navegacion directa al procesador
 
-### 2. ✅ Procesamiento y Conversión (`ImageProcessScreen.kt` + `ImageProcessor.kt`)
-- **9 filtros/transformaciones**: Original, Grises, Sepia, Vintage, Cálido, Frío, Rotar 90°, Voltear horizontal, Comprimir 50%
-- **Filtros con `ColorMatrix`**: Grayscale, Sepia, Vintage, Warm, Cool
-- **Transformaciones geométricas**: Rotación, flip, escala
-- **3 formatos de salida**: JPEG, PNG, WEBP_LOSSY
-- Slider de calidad (20–100%) para formatos con pérdida
-- **Comparación antes/después** con divisor arrastrable (drag gesture)
-- Información técnica: dimensiones, tamaño KB original/procesada
-- Guardado en `filesDir/processed/processed_timestamp.ext`
-- Procesamiento en `Dispatchers.IO` (coroutine, no bloquea UI)
+### 2. Procesamiento y Conversion — ImageProcessScreen.kt + ImageProcessor.kt
 
-### 3. ✅ Reproducción de Video (`VideoPlayerScreen.kt`)
-- **Media3/ExoPlayer** con control de ciclo de vida
-- Controles: ▶️ Play, ⏸ Pause, ⏹ Stop/Restart, ⏪ -10s, ⏩ +10s
-- **Barra de progreso personalizada** (`Slider` con tema dorado)
-- Etiquetas de tiempo formato `MM:SS`
-- Indicador de buffering (`CircularProgressIndicator`)
-- **Pantalla completa** con toggle
-- Soporte video local (URI File) y remoto (HTTP URL)
-- Video demo automático (Big Buck Bunny) si no hay video del recuerdo
-- Auto-ocultar controles tras 3s de reproducción
-- `DisposableEffect` garantiza `exoPlayer.release()` al salir
+- 11 filtros y transformaciones: Original, Grises, Sepia, Vintage, Calido, Frio, Brillo, Contraste, Rotar 90, Voltear, Comprimir
+- Filtros con ColorMatrix y transformaciones geometricas
+- 3 formatos de salida: JPEG, PNG, WEBP
+- Slider de calidad 20-100% para formatos con perdida
+- Comparacion antes/despues con divisor arrastrable mediante drag gesture
+- Informacion tecnica: dimensiones y tamano original/procesada en KB
+- Guardado en filesDir/processed/
+- Procesamiento en Dispatchers.IO mediante coroutine, sin bloquear la UI
 
-### 4. ✅ Animaciones y Datos Basados en Tiempo
+Decision tecnica: BitmapFactory.decodeFile() ignora los metadatos EXIF de orientacion. Se usa ExifInterface para leer TAG_ORIENTATION y aplicar la rotacion correctiva antes de cualquier procesamiento, garantizando que las fotos tomadas en vertical se muestren correctamente.
 
-**Animación 1 — Splash Screen** (`SplashActivity.kt`):
-- Logo con spring bounce (`DampingRatioMediumBouncy`)
+### 3. Reproduccion de Video — VideoPlayerScreen.kt
+
+- Media3/ExoPlayer con control de ciclo de vida
+- Controles: Play, Pause, Stop con reinicio, retroceso 10s, avance 10s
+- Barra de progreso personalizada con Slider en tema dorado
+- Etiquetas de tiempo en formato MM:SS
+- Indicador de buffering con CircularProgressIndicator
+- Pantalla completa con toggle
+- Soporte video local via URI de archivo y video remoto via URL HTTP
+- Video demo local incluido en assets de la app, sin necesidad de internet
+- Auto-ocultar controles tras 3.5 segundos de reproduccion
+- DisposableEffect garantiza exoPlayer.release() al destruir el composable
+
+### 4. Animaciones y Datos Basados en Tiempo
+
+Animacion 1 — Splash Screen (SplashActivity.kt):
+- Logo con spring bounce usando DampingRatioMediumBouncy
 - Texto con fade-in tween 800ms
-- Tagline con slide-up offset 700ms
-- Pulsación infinita del logo (`InfiniteTransition`)
+- Tagline con slide-up 700ms de delay
+- Pulsacion infinita del logo con InfiniteTransition
 - Puntos de carga animados con delay escalonado
 
-**Animación 2 — Timer Ring** (`TimerScreen.kt`):
-- Anillo SVG que rota continuamente (`LinearEasing`, 3000ms)
-- Arco de progreso que avanza según segundos % 60
-- Gradiente sweep dinámico (Índigo→Oro→Índigo)
+Animacion 2 — Anillo del cronometro (TimerScreen.kt):
+- Anillo que rota continuamente con LinearEasing cada 3000ms
+- Arco de progreso que avanza segun segundos mod 60
+- Gradiente sweep dinamico de Indigo a Oro
 
-**Animación 3 — Glow pulsante** (`TimerScreen.kt`):
-- `animateFloatAsState` para alpha del glow radial cuando corre
-- Escala pulsante del display cuando el cronómetro está activo
+Animacion 3 — Glow pulsante (TimerScreen.kt):
+- animateFloatAsState para el alpha del glow radial cuando el cronometro esta activo
+- Escala pulsante del display durante la ejecucion
 
-**Datos basados en tiempo**:
-- Cronómetro con `delay(1_000)` en coroutine de ViewModel
-- `TimerState` con start/pause/reset/lap
-- Tiempo formateado `HH:MM:SS` / `MM:SS`
+Datos basados en tiempo:
+- Cronometro con delay(1000) en coroutine del ViewModel
+- TimerState con start, pause, reset y laps
+- Tiempo formateado como HH:MM:SS o MM:SS segun duracion
 
-**Otras animaciones**:
+Otras animaciones:
 - FAB con spring bounce en Home
-- Items de galería con entrada escalonada `index * 50ms`
-- `AnimatedContent` para botones (idle/saving/saved)
-- Transiciones de navegación slide + fade
+- Items de galeria con entrada escalonada index * 40ms
+- AnimatedContent en botones de guardado: idle, saving, saved
+- Transiciones de navegacion slide horizontal y fade entre las 8 pantallas
 
-### 5. ✅ Procesadores y Eventos UI
+### 5. Procesadores y Eventos UI
 
-| Evento | Dónde |
-|--------|-------|
-| `onClick` | FAB, botones, chips, cards de memoria |
-| `onLongClick` | Cards en galería → toggle favorita |
-| Input de texto | Título, Descripción, Ubicación (con validación) |
-| Cambio de estado | Switch comparación, Toggle flash, Selector emoción |
-| Navegación | NavHost con 8 destinos, animaciones slide/fade |
-| Drag gesture | Divisor de comparación en ImageProcessScreen |
-| Slider | Calidad de imagen, progreso de video, cronómetro |
+| Evento | Donde |
+|---|---|
+| onClick | FAB, botones, chips, cards de memoria |
+| onLongClick | Cards en galeria para toggle de favorita |
+| Input de texto | Titulo, Descripcion, Ubicacion con validacion |
+| Cambio de estado | Switch comparacion, Toggle flash, Selector emocion |
+| Navegacion | NavHost con 8 destinos y animaciones |
+| Drag gesture | Divisor de comparacion en ImageProcessScreen |
+| Slider | Calidad de imagen y progreso de video |
 
-**UX destacado**:
-- Validación de título vacío con `isError` + `supportingText`
-- Long-press en emotion chips muestra label descriptivo
-- Auto-ocultación de controles de video
-- Snackbar de errores con dismiss
-- `AnimatedVisibility` en todos los estados condicionales
-- Feedback háptico en FAB (via click animation)
+Validacion de titulo vacio con isError y supportingText. AnimatedContent en boton guardar con tres estados. Snackbar de errores con dismiss. AnimatedVisibility en todos los estados condicionales.
 
-### 6. ✅ Lifecycle y Rendimiento
+### 6. Lifecycle y Rendimiento
 
-**Lifecycle**:
+Lifecycle:
+
 ```
-SplashActivity  → onCreate, onPause, onDestroy
-MainActivity    → onCreate, onResume, onPause, onDestroy
-MemoryViewModel → init, onCleared (cancela timerJob)
-ExoPlayer       → DisposableEffect → release()
-CameraX         → bindToLifecycle → auto-unbind
+SplashActivity  — onCreate, onPause, onDestroy
+MainActivity    — onCreate, onResume, onPause, onDestroy
+MemoryViewModel — init, onCleared cancela timerJob
+ExoPlayer       — DisposableEffect garantiza release()
+CameraX         — bindToLifecycle con auto-unbind
 ```
 
-**Logs** (todos los componentes críticos):
-```kotlin
-Log.d(TAG, "Camera bound: lensFacing=$lensFacing")
-Log.e(TAG, "Image processing failed", e)
-Log.d(TAG, "ExoPlayer released")
-Log.d(TAG, "Memory saved with id=$id")
-```
+Logs en todos los componentes criticos con Log.d y Log.e por TAG. Try-catch en cada operacion de base de datos, camara e imagen. Result en ImageProcessor.processImage().
 
-**Manejo de excepciones**:
-- `try-catch` en cada operación de BD, cámara e imagen
-- `ImageCaptureException` con mensajes localizados
-- `onError` en ExoPlayer listener
-- `Result<T>` en `ImageProcessor.processImage()`
-
-**Rendimiento**:
-- Imágenes cargadas con `inSampleSize` calculado dinámicamente
-- Procesamiento en `Dispatchers.IO` (coroutine)
-- `StateFlow` + `collect` — sin polling, push-based
-- `DisposableEffect` libera ExoPlayer al destruir composable
-- `timerJob?.cancel()` en `onCleared()`
-- Coil maneja caché de imágenes automáticamente
-- `LazyColumn` / `LazyVerticalGrid` — solo renderiza lo visible
+Rendimiento:
+- inSampleSize calculado dinamicamente al cargar bitmaps, maximo 1920px
+- Procesamiento en Dispatchers.IO
+- StateFlow sin polling, actualizacion por push
+- LazyColumn y LazyVerticalGrid renderizan solo lo visible
+- Coil gestiona cache de imagenes automaticamente
 
 ---
 
-## 🏗️ Arquitectura
+## Arquitectura
 
 ```
 MVVM + Repository Pattern + Room + StateFlow
 
 UI Layer (Compose Screens)
-    ↕ StateFlow
+    — StateFlow —
 ViewModel Layer (MemoryViewModel)
-    ↕ suspend fun / Flow
+    — suspend fun / Flow —
 Repository Layer (MemoryRepository)
-    ↕ Room DAO
+    — Room DAO —
 Local DB (MemorIADatabase / SQLite)
 ```
 
+La UI nunca accede directamente a la base de datos. El ViewModel expone StateFlow que la UI observa reactivamente. El Repository es el unico punto de verdad para los datos.
+
 ---
 
-## 📁 Estructura de Archivos
+## Estructura de Archivos
 
 ```
 app/src/main/
-├── AndroidManifest.xml
-├── java/com/memoria/app/
-│   ├── MainActivity.kt              # NavHost + Lifecycle
-│   ├── data/
-│   │   ├── model/Memory.kt          # Entidades + UI states
-│   │   └── repository/
-│   │       └── MemoryRepository.kt  # Room DB + DAO + Repo
-│   ├── utils/
-│   │   └── ImageProcessor.kt        # Filtros + conversión
-│   ├── viewmodel/
-│   │   └── MemoryViewModel.kt       # Estado + lógica + timer
-│   └── ui/
-│       ├── theme/Theme.kt           # Colores + tipografía
-│       └── screens/
-│           ├── SplashActivity.kt    # Splash animado
-│           ├── HomeScreen.kt        # Galería home + stats
-│           ├── CameraScreen.kt      # CameraX + permisos
-│           ├── ImageProcessScreen.kt # Filtros + conversión
-│           ├── VideoPlayerScreen.kt # ExoPlayer + controles
-│           ├── TimerScreen.kt       # Cronómetro animado
-│           ├── AddMemoryScreen.kt   # Form + emotion picker
-│           └── GalleryAndDetailScreen.kt # Galería + detalle
-└── res/
-    ├── drawable/ic_splash_logo.xml
-    ├── values/{strings,themes,colors}.xml
-    └── xml/{file_paths,backup_rules,data_extraction_rules}.xml
+    AndroidManifest.xml
+    assets/
+        demo.mp4
+    java/com/memoria/app/
+        MainActivity.kt
+        data/
+            model/Memory.kt
+            repository/MemoryRepository.kt
+        utils/
+            ImageProcessor.kt
+        viewmodel/
+            MemoryViewModel.kt
+        ui/
+            theme/Theme.kt
+            screens/
+                SplashActivity.kt
+                HomeScreen.kt
+                CameraScreen.kt
+                ImageProcessScreen.kt
+                VideoPlayerScreen.kt
+                TimerScreen.kt
+                AddMemoryScreen.kt
+                GalleryAndDetailScreen.kt
+    res/
+        drawable/ic_launcher.xml
+        values/strings.xml
+        values/themes.xml
+        values/colors.xml
+        xml/file_paths.xml
+        xml/backup_rules.xml
+        xml/data_extraction_rules.xml
 ```
 
 ---
 
-## 🛠️ Stack Tecnológico
+## Stack Tecnologico
 
-| Librería | Uso |
-|----------|-----|
-| **Jetpack Compose** | UI declarativa 100% |
-| **Material 3** | Design system |
-| **CameraX** | Captura de foto |
-| **Media3/ExoPlayer** | Reproducción de video |
-| **Room** | Base de datos local |
-| **Coil** | Carga de imágenes |
-| **Accompanist Permissions** | Gestión de permisos |
-| **Navigation Compose** | Navegación multi-pantalla |
-| **DataStore** | Preferencias |
-| **Kotlin Coroutines + Flow** | Async + reactive state |
+| Libreria | Version | Uso |
+|---|---|---|
+| Kotlin | 1.9.22 | Lenguaje oficial Android |
+| Jetpack Compose | BOM 2024.02 | UI declarativa |
+| Material 3 | Incluido | Design system |
+| CameraX | 1.3.2 | Captura de fotografia |
+| Media3/ExoPlayer | 1.3.0 | Reproduccion de video |
+| Room | 2.6.1 | Base de datos local con Flow reactivo |
+| Navigation Compose | 2.7.7 | Navegacion con animaciones |
+| Coil | 2.6.0 | Carga de imagenes con cache |
+| ExifInterface | 1.3.7 | Correccion de orientacion EXIF |
+| Accompanist Permissions | 0.34.0 | Gestion de permisos en Compose |
+| Kotlin Coroutines y Flow | Incluido | Programacion asincrona |
 
 ---
 
-## 🚀 Cómo Compilar
+## Compilacion
 
-```bash
-# Clonar / abrir en Android Studio Hedgehog+
-# Gradle sync automático
-# Run en emulador API 26+ o dispositivo físico
-
-# Mínimo: API 26 (Android 8.0)
-# Target: API 34 (Android 14)
+```
+minSdk:    26 (Android 8.0)
+targetSdk: 34 (Android 14)
+Gradle:    8.7
+AGP:       8.4.2
+JDK:       17
 ```
 
----
-
-## 🎯 Aspectos Innovadores
-
-1. **Etiquetas emocionales** — cada recuerdo tiene una emoción asociada con color y emoji
-2. **Comparación drag-to-reveal** — desliza para comparar original/procesada en tiempo real
-3. **Timer con anillo SVG animado** — visualización artística del cronómetro
-4. **Galería con entrada escalonada** — items aparecen con delay individual (staggered)
-5. **Paleta Índigo + Oro** — identidad visual premium, no genérica
-6. **Splash screen con spring physics** — rebote natural del logo
-7. **8 pantallas conectadas** con transiciones slide bidireccionales
+Abrir en Android Studio Hedgehog o superior, sincronizar Gradle y ejecutar en emulador API 26+ o dispositivo fisico.
 
 ---
 
-*MemorIA — Desarrollado con Kotlin y Jetpack Compose — Práctica de Desarrollo Mobile*
+MemorIA — Desarrollado con Kotlin y Jetpack Compose — Practica 3 Desarrollo de Aplicaciones Moviles
